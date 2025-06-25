@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JawaLingo - Belajar Bahasa Jawa dengan AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* gray-50 */
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #16a34a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #15803d; }
+        
+        /* Animation */
+        .content-module {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .btn-quiz.correct {
+            background-color: #22c55e !important;
+            color: white !important;
+            border-color: #16a34a !important;
+            transform: scale(1.05);
+        }
+        .btn-quiz.wrong {
+            background-color: #ef4444 !important;
+            color: white !important;
+            border-color: #dc2626 !important;
+        }
+        /* Loading spinner */
+        .loader {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid #ffffff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom Toggle Switch */
+        .toggle-label {
+            width: 120px;
+            height: 44px;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #16a34a;
+        }
+        .toggle-checkbox:checked + .toggle-label .toggle-ball {
+            transform: translateX(76px);
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div id="app" class="max-w-5xl mx-auto p-4 md:p-6 min-h-screen">
+        <!-- Header Section -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-green-700">JawaLingo</h1>
+            <p class="text-gray-500 mt-2 text-lg">Gerbang Anda ke Dunia Bahasa Jawa</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="mb-8 bg-white p-2 rounded-xl shadow-md sticky top-4 z-10">
+            <nav class="flex justify-center items-center space-x-1 md:space-x-2">
+                <button onclick="showModule('pembelajaran')" id="tab-pembelajaran" class="nav-tab flex-1 py-3 px-2 md:px-4 text-sm md:text-base font-semibold rounded-lg transition-all duration-300">
+                    <i class="fa-solid fa-graduation-cap mr-2"></i> Pembelajaran
+                </button>
+                <button onclick="showModule('kamus')" id="tab-kamus" class="nav-tab flex-1 py-3 px-2 md:px-4 text-sm md:text-base font-semibold rounded-lg transition-all duration-300">
+                    <i class="fa-solid fa-book mr-2"></i> Kamus
+                </button>
+                <button onclick="showModule('builder')" id="tab-builder" class="nav-tab flex-1 py-3 px-2 md:px-4 text-sm md:text-base font-semibold rounded-lg transition-all duration-300">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Pembina Ayat
+                </button>
+                <button onclick="showModule('kuiz')" id="tab-kuiz" class="nav-tab flex-1 py-3 px-2 md:px-4 text-sm md:text-base font-semibold rounded-lg transition-all duration-300">
+                    <i class="fa-solid fa-gamepad mr-2"></i> Kuiz
+                </button>
+            </nav>
+        </div>
+
+        <!-- Main Content Area -->
+        <main>
+            <!-- Kamus Module -->
+            <div id="content-kamus" class="content-module hidden">
+                <div class="mb-6 relative">
+                    <input type="text" id="searchInput" onkeyup="searchDictionary()" placeholder="Cari perkataan Jawa atau Melayu..." class="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                </div>
+                <div id="dictionary-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Dictionary entries populated here -->
+                </div>
+                <div id="no-results" class="hidden text-center py-16">
+                    <i class="fa-solid fa-magnifying-glass text-4xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500 text-lg">Maaf, tiada hasil ditemui.</p>
+                </div>
+            </div>
+            
+            <!-- Pembelajaran Module -->
+            <div id="content-pembelajaran" class="content-module hidden">
+                <div class="flex justify-center items-center mb-8">
+                    <span class="font-semibold text-lg mr-4 text-gray-700" id="lang-label-ngoko">Ngoko</span>
+                    <input type="checkbox" id="language-toggle" class="toggle-checkbox hidden" onchange="toggleLanguageLevel()">
+                    <label for="language-toggle" class="toggle-label relative flex items-center bg-gray-300 rounded-full cursor-pointer transition-colors duration-300">
+                        <div class="toggle-ball absolute w-9 h-9 bg-white rounded-full shadow-md transform transition-transform duration-300 left-1"></div>
+                    </label>
+                    <span class="font-semibold text-lg ml-4 text-gray-400" id="lang-label-krama">Krama</span>
+                </div>
+                <div id="learning-content-list" class="space-y-8">
+                    <!-- Learning content populated here -->
+                </div>
+            </div>
+
+            <!-- Sentence Builder Module (Gemini AI) -->
+            <div id="content-builder" class="content-module hidden">
+                <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg max-w-xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-4 text-center text-green-700">Pembina Ayat Dikuasakan AI ✨</h2>
+                    <p class="text-center text-gray-600 mb-6">Tulis ayat dalam Bahasa Melayu dan Gemini akan terjemahkannya ke Bahasa Jawa untuk anda.</p>
+                    
+                    <div class="space-y-4">
+                        <textarea id="builder-input" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500" rows="4" placeholder="Contoh: Saya hendak pergi ke pasar untuk membeli sayur."></textarea>
+                        
+                        <div class="flex items-center space-x-4">
+                            <label for="builder-level" class="font-medium">Pilih Tahap Bahasa:</label>
+                            <select id="builder-level" class="flex-grow p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <option value="Ngoko (biasa/kasual)" selected>Ngoko (Biasa)</option>
+                                <option value="Krama (halus/formal)">Krama (Halus)</option>
+                            </select>
+                        </div>
+
+                        <button onclick="translateSentence()" id="translate-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 px-8 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
+                            <span id="translate-button-text">Terjemah</span>
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <div id="translate-loader" class="loader hidden"></div>
+                        </button>
+                    </div>
+
+                    <div id="builder-result-container" class="mt-6 hidden">
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Hasil Terjemahan:</h3>
+                        <div id="builder-result" class="bg-green-50 p-4 rounded-lg border border-green-200 text-lg text-gray-900">
+                            <!-- Translation result will appear here -->
+                        </div>
+                    </div>
+                     <div id="builder-error-container" class="mt-6 hidden">
+                        <div class="bg-red-100 p-4 rounded-lg border border-red-200 text-red-800 flex items-center space-x-3">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <p><strong>Maaf, ada masalah.</strong> Sila cuba lagi sebentar lagi.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kuiz Module -->
+            <div id="content-kuiz" class="content-module hidden">
+                 <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg max-w-lg mx-auto">
+                    <div id="quiz-intro" class="text-center">
+                        <h2 class="text-2xl font-bold mb-4">Uji Kefahaman Bahasa Jawa Anda!</h2>
+                        <p class="mb-8 text-gray-600">Pilih maksud yang betul bagi perkataan Jawa yang diberi. Semoga berjaya!</p>
+                        <button onclick="startQuiz()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                            Mula Kuiz
+                        </button>
+                    </div>
+                    <div id="quiz-container" class="hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <div id="quiz-progress" class="text-sm font-medium text-gray-500">Soalan 1 / 10</div>
+                            <div id="quiz-score" class="text-sm font-bold bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full">Skor: 0</div>
+                        </div>
+                        <div class="bg-gray-100 p-6 rounded-lg text-center mb-6">
+                            <p class="text-gray-600 mb-2">Apakah maksud bagi:</p>
+                            <h3 id="quiz-word" class="text-3xl font-bold text-green-700"></h3>
+                        </div>
+                        <div id="quiz-options" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                        <div id="quiz-feedback" class="mt-6 h-8 text-center transition-opacity duration-300"></div>
+                    </div>
+                    <div id="quiz-end" class="hidden text-center">
+                        <h2 class="text-2xl font-bold mb-4">Kuiz Tamat!</h2>
+                        <p class="text-lg mb-2">Skor akhir anda:</p>
+                        <p id="final-score" class="text-5xl font-bold text-green-600 mb-8"></p>
+                        <button onclick="startQuiz()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                            Cuba Lagi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- DATA (remains the same) ---
+        const dictionary = [ { jawa: 'Aku', melayu: 'Aku, Saya (Ngoko)', example: 'Aku arep lungo.' }, { jawa: 'Kulo', melayu: 'Saya (Krama)', example: 'Kulo badhe tindak.' }, { jawa: 'Kowe', melayu: 'Kau, Awak (Ngoko)', example: 'Kowe wis mangan?' }, { jawa: 'Sampeyan', melayu: 'Anda (Ngoko Alus/Sederhana)', example: 'Sampeyan saking pundi?' }, { jawa: 'Panjenengan', melayu: 'Anda (Krama)', example: 'Panjenengan sampun dhahar?' }, { jawa: 'Dheweke', melayu: 'Dia (Ngoko)', example: 'Dheweke lagi sinau.' }, { jawa: 'Piyambakipun', melayu: 'Beliau (Krama)', example: 'Piyambakipun nembe rawuh.' }, { jawa: 'Kita', melayu: 'Kita (Inklusif)', example: 'Ayo kita mangan bareng.' }, { jawa: 'Mangan', melayu: 'Makan (Ngoko)', example: 'Aku durung mangan.' }, { jawa: 'Dhahar', melayu: 'Makan (Krama)', example: 'Bapak sampun dhahar.' }, { jawa: 'Turu', melayu: 'Tidur (Ngoko)', example: 'Bocah kae lagi turu.' }, { jawa: 'Sare', melayu: 'Tidur (Krama)', example: 'Simbah saweg sare.' }, { jawa: 'Lungo', melayu: 'Pergi (Ngoko)', example: 'Kowe arep lungo menyang endi?' }, { jawa: 'Tindak', melayu: 'Pergi (Krama)', example: 'Bapak badhe tindak dhateng kantor.' }, { jawa: 'Teko', melayu: 'Datang, Tiba (Ngoko)', example: 'Kapan kowe teko?' }, { jawa: 'Rawuh', melayu: 'Datang, Tiba (Krama)', example: 'Tamu agung sampun rawuh.' }, { jawa: 'Ngombe', melayu: 'Minum (Ngoko)', example: 'Aku ngombe kopi.' }, { jawa: 'Ngunjuk', melayu: 'Minum (Krama)', example: 'Monggo dipun unjuk wedangipun.' }, { jawa: 'Ndelok', melayu: 'Melihat (Ngoko)', example: 'Ayo ndelok wayang.' }, { jawa: 'Mirsani', melayu: 'Melihat (Krama)', example: 'Kulo badhe mirsani pagelaran.' }, { jawa: 'Ngguyu', melayu: 'Ketawa (Ngoko)', example: 'Ojo ngguyu banter-banter.' }, { jawa: 'Gujeng', melayu: 'Ketawa (Krama)', example: 'Bapak nembe gujeng.' }, { jawa: 'Nangis', melayu: 'Menangis (Ngoko/Krama)', example: 'Adhik nangis jaluk jajan.' }, { jawa: 'Sinau', melayu: 'Belajar (Ngoko)', example: 'Aku kudu sinau sing sregep.' }, { jawa: 'Ngasto', melayu: 'Bekerja (Krama)', example: 'Bapak ngasto ing pabrik.' }, { jawa: 'Opo', melayu: 'Apa (Ngoko)', example: 'Iki opo jenenge?' }, { jawa: 'Punapa', melayu: 'Apa (Krama)', example: 'Punapa leres niki dalemipun Pak Budi?' }, { jawa: 'Sopo', melayu: 'Siapa (Ngoko)', example: 'Sopo jenengmu?' }, { jawa: 'Sinten', melayu: 'Siapa (Krama)', example: 'Asmanipun panjenengan sinten?' }, { jawa: 'Kapan', melayu: 'Bila (Ngoko/Krama)', example: 'Kapan acaraku diwiwiti?' }, { jawa: 'Ing endi', melayu: 'Di mana (Ngoko)', example: 'Omahmu ing endi?' }, { jawa: 'Wonten pundi', melayu: 'Di mana (Krama)', example: 'Dalemipun panjenengan wonten pundi?' }, { jawa: 'Piro', melayu: 'Berapa (Ngoko)', example: 'Regane piro iki?' }, { jawa: 'Pinten', melayu: 'Berapa (Krama)', example: 'Reganipun pinten nggih?' }, { jawa: 'Piye', melayu: 'Bagaimana (Ngoko)', example: 'Piye kabare?' }, { jawa: 'Pripun', melayu: 'Bagaimana (Krama)', example: 'Pripun kabaripun?' }, { jawa: 'Omah', melayu: 'Rumah (Ngoko)', example: 'Omahku cedhak pasar.' }, { jawa: 'Dalem', melayu: 'Rumah (Krama)', example: 'Dalemipun Pak Lurah ageng sanget.' }, { jawa: 'Dhuwit', melayu: 'Duit (Ngoko)', example: 'Aku ra duwe dhuwit.' }, { jawa: 'Arto', melayu: 'Duit (Krama)', example: 'Kulo mbeto arto sekedhik.' }, { jawa: 'Anak', melayu: 'Anak (Ngoko/Krama)', example: 'Iki anakku sing mbarep.' }, { jawa: 'Putra', melayu: 'Anak (Krama Halus)', example: 'Putranipun sampun ageng.' }, { jawa: 'Banyu', melayu: 'Air (Ngoko)', example: 'Aku arep ngombe banyu putih.' }, { jawa: 'Toya', melayu: 'Air (Krama)', example: 'Nyuwun toya, Pak.' }, { jawa: 'Gedhang', melayu: 'Pisang', example: 'Gedhang goreng enak tenan.' }, { jawa: 'Sego', melayu: 'Nasi (Ngoko)', example: 'Sego pecel lawuh tempe.' }, { jawa: 'Sekul', melayu: 'Nasi (Krama)', example: 'Monggo dhahar sekul rumiyin.' }, { jawa: 'Apik', melayu: 'Bagus, Baik', example: 'Klambi iki apik tenan.' }, { jawa: 'Sae', melayu: 'Bagus, Baik (Krama)', example: 'Kondisipun sae sanget.' }, { jawa: 'Elek', melayu: 'Jelek, Buruk', example: 'Tulisanmu kok elek men.' }, { jawa: 'Awis', melayu: 'Jelek, Buruk (Krama)', example: 'Barangipun awis.' }, { jawa: 'Sugeng', melayu: 'Selamat', example: 'Sugeng enjing.' }, { jawa: 'Matur nuwun', melayu: 'Terima kasih', example: 'Matur nuwun sanget.' } ];
+        const phrases = { ngoko: { 'Sapaan & Asas': [ { jawa: 'Piye kabare?', melayu: 'Apa khabar?' }, { jawa: 'Apik-apik wae.', melayu: 'Khabar baik.' }, { jawa: 'Sopo jenengmu?', melayu: 'Siapa nama awak?' }, { jawa: 'Jenengku...', melayu: 'Nama saya...' }, { jawa: 'Suwun yo.', melayu: 'Terima kasih ya.' }, { jawa: 'Podo-podo.', melayu: 'Sama-sama.' }, ], 'Makan & Minum': [ { jawa: 'Ayo mangan.', melayu: 'Jom makan.' }, { jawa: 'Enak tenan!', melayu: 'Sedap betul!' }, { jawa: 'Aku luwe.', melayu: 'Saya lapar.' }, { jawa: 'Aku wis wareg.', melayu: 'Saya sudah kenyang.' }, { jawa: 'Iki regane piro?', melayu: 'Ini harganya berapa?' }, ], 'Soalan Lazim': [ { jawa: 'Omahmu nandi?', melayu: 'Rumah awak di mana?' }, { jawa: 'Kowe arep nandi?', melayu: 'Awak nak ke mana?' }, { jawa: 'Iki opo?', melayu: 'Ini apa?' }, ], }, krama: { 'Sapaan & Asas': [ { jawa: 'Pripun kabaripun?', melayu: 'Apa khabar? (formal)' }, { jawa: 'Sae-sae kemawon.', melayu: 'Khabar baik sahaja.' }, { jawa: 'Sinten asmanipun panjenengan?', melayu: 'Siapa nama anda?' }, { jawa: 'Asma kulo...', melayu: 'Nama saya...' }, { jawa: 'Matur nuwun sanget.', melayu: 'Terima kasih banyak.' }, { jawa: 'Sami-sami.', melayu: 'Sama-sama.' }, ], 'Makan & Minum': [ { jawa: 'Monggo, kita dhahar.', melayu: 'Jemput, kita makan.' }, { jawa: 'Raosipun eco sanget.', melayu: 'Rasanya sangat sedap.' }, { jawa: 'Kulo luwe.', melayu: 'Saya lapar.' }, { jawa: 'Kulo sampun tuwuk.', melayu: 'Saya sudah kenyang.' }, { jawa: 'Niki reginipun pinten?', melayu: 'Ini harganya berapa?' }, ], 'Soalan Lazim': [ { jawa: 'Dalemipun panjenengan wonten pundi?', melayu: 'Rumah anda di mana?' }, { jawa: 'Panjenengan badhe tindak pundi?', melayu: 'Anda hendak ke mana?' }, { jawa: 'Menika punapa?', melayu: 'Ini apa?' }, ], } };
+        let quizState = { questions: [], currentQuestionIndex: 0, score: 0, totalQuestions: 10 };
+
+        // --- UTILITY FUNCTIONS ---
+        function speak(text) { window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); const voices = window.speechSynthesis.getVoices(); utterance.voice = voices.find(voice => voice.lang === 'jv-ID') || voices.find(voice => voice.lang === 'id-ID') || null; utterance.lang = utterance.voice ? utterance.voice.lang : 'id-ID'; utterance.rate = 0.9; utterance.pitch = 1.0; window.speechSynthesis.speak(utterance); }
+        window.speechSynthesis.onvoiceschanged = speak;
+
+        // --- DICTIONARY/KAMUS FUNCTIONS ---
+        function renderDictionary(filter = '') { const listElement = document.getElementById('dictionary-list'); const noResultsElement = document.getElementById('no-results'); listElement.innerHTML = ''; const filteredData = dictionary.filter(entry => entry.jawa.toLowerCase().includes(filter.toLowerCase()) || entry.melayu.toLowerCase().includes(filter.toLowerCase())); noResultsElement.classList.toggle('hidden', filteredData.length > 0); listElement.classList.toggle('hidden', filteredData.length === 0); filteredData.forEach(entry => { const card = `<div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300"><div><div class="flex justify-between items-start"><h3 class="text-xl font-bold text-green-700">${entry.jawa}</h3><button onclick="speak('${entry.jawa}')" class="text-gray-400 hover:text-green-500 transition-colors"><i class="fas fa-volume-up fa-lg"></i></button></div><p class="text-gray-700 mt-1">${entry.melayu}</p></div><p class="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-100">Contoh: <em class="italic">"${entry.example}"</em></p></div>`; listElement.innerHTML += card; }); }
+        function searchDictionary() { renderDictionary(document.getElementById('searchInput').value); }
+
+        // --- LEARNING MODULE FUNCTIONS ---
+        function renderLearningContent(level) {
+            const listElement = document.getElementById('learning-content-list');
+            const data = phrases[level];
+            if(!listElement || !data) return;
+            
+            listElement.innerHTML = '';
+            for (const category in data) {
+                let categoryHtml = `<div><h2 class="text-2xl font-bold text-green-800 mb-4">${category}</h2><div class="space-y-4">`;
+                data[category].forEach(phrase => {
+                    categoryHtml += `<div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center justify-between transition-shadow hover:shadow-md"><div><p class="font-semibold text-lg text-gray-800">${phrase.jawa}</p><p class="text-sm text-gray-600">${phrase.melayu}</p></div><button onclick="speak('${phrase.jawa}')" class="text-gray-400 hover:text-green-500 transition-colors ml-4 p-2 rounded-full hover:bg-green-50"><i class="fas fa-volume-up"></i></button></div>`;
+                });
+                categoryHtml += '</div></div>';
+                listElement.innerHTML += categoryHtml;
+            }
+        }
+
+        function toggleLanguageLevel() {
+            const toggle = document.getElementById('language-toggle');
+            const ngokoLabel = document.getElementById('lang-label-ngoko');
+            const kramaLabel = document.getElementById('lang-label-krama');
+            
+            if (toggle.checked) {
+                // Switch to Krama
+                renderLearningContent('krama');
+                ngokoLabel.classList.remove('text-gray-700');
+                ngokoLabel.classList.add('text-gray-400');
+                kramaLabel.classList.remove('text-gray-400');
+                kramaLabel.classList.add('text-gray-700');
+            } else {
+                // Switch to Ngoko
+                renderLearningContent('ngoko');
+                ngokoLabel.classList.add('text-gray-700');
+                ngokoLabel.classList.remove('text-gray-400');
+                kramaLabel.classList.add('text-gray-400');
+                kramaLabel.classList.remove('text-gray-700');
+            }
+        }
+
+        // --- GEMINI API FUNCTION ---
+        async function translateSentence() {
+            const input_text = document.getElementById('builder-input').value;
+            const level = document.getElementById('builder-level').value;
+            const resultContainer = document.getElementById('builder-result-container');
+            const errorContainer = document.getElementById('builder-error-container');
+            const resultDiv = document.getElementById('builder-result');
+            const button = document.getElementById('translate-button');
+            const buttonText = document.getElementById('translate-button-text');
+            const loader = document.getElementById('translate-loader');
+
+            if (!input_text.trim()) {
+                // A more subtle feedback than alert
+                const inputEl = document.getElementById('builder-input');
+                inputEl.classList.add('ring-2', 'ring-red-400');
+                inputEl.placeholder = "Sila masukkan ayat dahulu...";
+                setTimeout(() => {
+                    inputEl.classList.remove('ring-2', 'ring-red-400');
+                    inputEl.placeholder = "Contoh: Saya hendak pergi ke pasar untuk membeli sayur.";
+                }, 2000);
+                return;
+            }
+
+            buttonText.parentElement.querySelector('i').classList.add('hidden');
+            loader.classList.remove('hidden');
+            button.disabled = true;
+            resultContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+
+            const prompt = `Translate the following Malay sentence into Javanese, using the '${level}' style. Provide only the Javanese translation, nothing else.\n\nMalay: "${input_text}"\nJavanese:`;
+            
+            try {
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+                
+                const result = await response.json();
+
+                if (result.candidates?.[0]?.content?.parts?.[0]) {
+                    resultDiv.textContent = result.candidates[0].content.parts[0].text;
+                    resultContainer.classList.remove('hidden');
+                } else {
+                    throw new Error("Invalid response structure from API.");
+                }
+
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                errorContainer.classList.remove('hidden');
+            } finally {
+                loader.classList.add('hidden');
+                buttonText.parentElement.querySelector('i').classList.remove('hidden');
+                button.disabled = false;
+            }
+        }
+
+        // --- QUIZ FUNCTIONS ---
+        function startQuiz() { quizState.score = 0; quizState.currentQuestionIndex = 0; quizState.questions = generateQuizQuestions(); document.getElementById('quiz-intro').classList.add('hidden'); document.getElementById('quiz-end').classList.add('hidden'); document.getElementById('quiz-container').classList.remove('hidden'); displayQuestion(); }
+        function generateQuizQuestions() { const questions = []; const shuffledDict = [...dictionary].sort(() => 0.5 - Math.random()); for (let i = 0; i < quizState.totalQuestions; i++) { const correctAnswer = shuffledDict[i]; const options = [correctAnswer.melayu]; const wrongAnswersPool = shuffledDict.filter(item => item.jawa !== correctAnswer.jawa); const wrongAnswers = wrongAnswersPool.slice(0, 3).map(item => item.melayu); options.push(...wrongAnswers); const shuffledOptions = options.sort(() => 0.5 - Math.random()); questions.push({ word: correctAnswer.jawa, options: shuffledOptions, answer: correctAnswer.melayu }); } return questions; }
+        function displayQuestion() { if (quizState.currentQuestionIndex >= quizState.totalQuestions) { endQuiz(); return; } const question = quizState.questions[quizState.currentQuestionIndex]; document.getElementById('quiz-word').textContent = question.word; document.getElementById('quiz-progress').textContent = `Soalan ${quizState.currentQuestionIndex + 1} / ${quizState.totalQuestions}`; document.getElementById('quiz-score').textContent = `Skor: ${quizState.score}`; const optionsContainer = document.getElementById('quiz-options'); optionsContainer.innerHTML = ''; question.options.forEach(option => { const button = document.createElement('button'); button.textContent = option; button.className = 'btn-quiz w-full p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:border-green-400 transition-all duration-200'; button.onclick = () => checkAnswer(option, button); optionsContainer.appendChild(button); }); document.getElementById('quiz-feedback').innerHTML = ''; }
+        function checkAnswer(selectedOption, button) { const question = quizState.questions[quizState.currentQuestionIndex]; const feedbackEl = document.getElementById('quiz-feedback'); const allButtons = document.querySelectorAll('.btn-quiz'); allButtons.forEach(btn => btn.disabled = true); if (selectedOption === question.answer) { quizState.score++; button.classList.add('correct'); feedbackEl.innerHTML = '<p class="text-green-600 font-semibold">Betul!</p>'; } else { button.classList.add('wrong'); feedbackEl.innerHTML = `<p class="text-red-600 font-semibold">Salah. Jawapan: ${question.answer}</p>`; allButtons.forEach(btn => { if (btn.textContent === question.answer) btn.classList.add('correct'); }); } document.getElementById('quiz-score').textContent = `Skor: ${quizState.score}`; setTimeout(() => { quizState.currentQuestionIndex++; displayQuestion(); }, 1800); }
+        function endQuiz() { document.getElementById('quiz-container').classList.add('hidden'); document.getElementById('quiz-end').classList.remove('hidden'); document.getElementById('final-score').textContent = `${quizState.score} / ${quizState.totalQuestions}`; }
+
+        // --- TAB MANAGEMENT ---
+        function showModule(moduleName) {
+            document.querySelectorAll('.content-module').forEach(content => content.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('bg-green-600', 'text-white', 'shadow-lg');
+                tab.classList.add('text-gray-500', 'hover:bg-green-100');
+            });
+
+            document.getElementById(`content-${moduleName}`).classList.remove('hidden');
+            const activeTab = document.getElementById(`tab-${moduleName}`);
+            activeTab.classList.add('bg-green-600', 'text-white', 'shadow-lg');
+            activeTab.classList.remove('text-gray-500', 'hover:bg-green-100');
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            renderDictionary();
+            renderLearningContent('ngoko'); // Default learning view
+            showModule('pembelajaran'); // Default tab on load
+        };
+    </script>
+
+</body>
+</html>
