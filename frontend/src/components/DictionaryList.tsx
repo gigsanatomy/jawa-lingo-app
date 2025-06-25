@@ -32,7 +32,6 @@ export const DictionaryList = ({ search = "", tahap = "", kategori = "Semua" }: 
   const fetchEntries = async () => {
     setLoading(true);
     const q = query(collection(db, "dictionary"), orderBy("word"));
-    // No server-side search, so filter client-side for now
     const snapshot = await getDocs(q);
     let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as DictionaryEntry));
     if (search.trim()) {
@@ -101,69 +100,76 @@ export const DictionaryList = ({ search = "", tahap = "", kategori = "Semua" }: 
   });
 
   return (
-    <div className="max-w-3xl mx-auto mt-10">
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+    <div className="w-full max-w-6xl mx-auto mt-6">
+      {/* Search Bar */}
+      <div className="mb-8 relative">
         <input
           type="text"
-          className="border border-blue-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 flex-1"
-          placeholder="Cari kata Jawa..."
+          className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
+          placeholder="Cari perkataan Jawa atau Melayu..."
           defaultValue={search}
         />
-        <input
-          type="text"
-          className="border border-blue-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 w-48"
-          placeholder="Filter jenis kata..."
-          defaultValue={tahap}
-        />
+        <i className="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
       </div>
+      {/* Card Grid */}
       {loading ? (
-        <div className="text-center text-blue-700">Memuatkan data...</div>
+        <div className="text-center text-green-700 py-16">Memuatkan data...</div>
       ) : filteredEntries.length === 0 ? (
-        <div className="text-center text-blue-700 col-span-2">Tiada kata dijumpai.</div>
+        <div className="text-center text-gray-500 py-16">
+          <i className="fa-solid fa-magnifying-glass text-4xl text-gray-300 mb-4"></i>
+          <p className="text-lg">Maaf, tiada hasil ditemui.</p>
+        </div>
       ) : (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 justify-center items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 auto-rows-fr">
           {filteredEntries.map((entry) => (
             <div
               key={entry.id}
-              className="bg-white shadow rounded-xl p-6 flex flex-col gap-2 relative transition-transform duration-200 hover:scale-[1.03] hover:shadow-2xl mx-auto w-full max-w-md items-center text-center"
+              className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-left mx-auto w-full max-w-md min-h-[220px]"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xl font-bold text-blue-700 flex items-center gap-2">
-                  {highlightText(entry.word, search)}
-                  <button
-                    type="button"
-                    onClick={() => handlePlayAudio(entry.word)}
-                    aria-label={`Dengar sebutan ${entry.word}`}
-                    className="ml-2 p-1 rounded-full bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    tabIndex={0}
-                  >
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="#2563eb" strokeWidth="2" d="M5 9v6h4l5 5V4l-5 5H5z"/><path stroke="#2563eb" strokeWidth="2" d="M15 9.354v5.292a3 3 0 000-5.292z"/></svg>
-                  </button>
-                </span>
-                {user && (
-                  <div className="flex gap-2">
+              <div>
+                <div className="flex justify-between items-start">
+                  <h3 className="text-xl font-bold text-green-700 flex items-center gap-2">
+                    {highlightText(entry.word, search)}
                     <button
-                      onClick={() => handleEdit(entry)}
-                      className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-bold px-3 py-1 rounded"
+                      type="button"
+                      onClick={() => handlePlayAudio(entry.word)}
+                      aria-label={`Dengar sebutan ${entry.word}`}
+                      className="text-gray-400 hover:text-green-500 transition-colors ml-2 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-green-400"
+                      tabIndex={0}
                     >
-                      Edit
+                      <i className="fa-solid fa-volume-up fa-lg"></i>
                     </button>
-                    <button
-                      onClick={() => handleDelete(entry.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white font-bold px-3 py-1 rounded"
-                    >
-                      Padam
-                    </button>
-                  </div>
-                )}
+                  </h3>
+                </div>
+                <p className="text-gray-700 mt-1">{highlightText(entry.meaning, search)}</p>
               </div>
-              <div className="text-blue-900 mb-1">{highlightText(entry.meaning, search)}</div>
-              <div className="text-xs text-blue-500 mb-1">Jenis: {entry.type}</div>
-              <div className="text-sm text-gray-700">{entry.examples.length > 0 && (
-                <>
-                  <span className="font-semibold">Contoh:</span> {entry.examples.join('; ')}
-                </>
-              )}</div>
+              <div className="space-y-2 mt-4 pt-4 border-t border-gray-100">
+                <p className="text-sm text-gray-500">Contoh: <em className="italic">{entry.examples?.[0] || '-'}</em></p>
+                <div className="flex gap-2 items-center">
+                  <button
+                    className="text-sm font-semibold text-green-600 hover:text-green-800 transition-colors flex items-center gap-1"
+                  >
+                    <i className="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Jelaskan Kata ✨</span>
+                  </button>
+                  {user && (
+                    <>
+                      <button
+                        onClick={() => handleEdit(entry)}
+                        className="text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-bold px-3 py-1 rounded-lg border border-yellow-200 transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(entry.id)}
+                        className="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-bold px-3 py-1 rounded-lg border border-red-200 transition"
+                      >
+                        Padam
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>

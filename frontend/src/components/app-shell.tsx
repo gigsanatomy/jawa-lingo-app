@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { Navbar } from './Navbar';
 import { usePathname, useRouter } from 'next/navigation';
