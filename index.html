@@ -148,7 +148,7 @@
                         <h2 class="text-2xl font-bold text-gray-800">Pusat Latihan AI</h2>
                         <p class="text-gray-500 mt-1">Pilih aktiviti untuk mengasah kemahiran anda.</p>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
                         <button onclick="showLatihanSubmodule('builder')" class="text-center p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
                             <i class="fa-solid fa-wand-magic-sparkles text-4xl text-purple-500 mb-4"></i>
                             <h3 class="text-xl font-bold text-gray-800">Pembina Ayat</h3>
@@ -164,6 +164,11 @@
                             <h3 class="text-xl font-bold text-gray-800">Budaya AI</h3>
                             <p class="text-gray-500 mt-1">Fahami etiket & budaya.</p>
                         </button>
+                        <button onclick="showLatihanSubmodule('cerita')" class="text-center p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+                            <i class="fa-solid fa-book-open-reader text-4xl text-orange-500 mb-4"></i>
+                            <h3 class="text-xl font-bold text-gray-800">Cerita Rakyat AI</h3>
+                            <p class="text-gray-500 mt-1">Baca cerita dalam Bahasa Jawa.</p>
+                        </button>
                     </div>
                 </div>
 
@@ -171,7 +176,7 @@
                 <div id="latihan-builder" class="latihan-submodule hidden">
                     <button onclick="showLatihanSubmodule('intro')" class="mb-4 text-green-600 hover:text-green-800 font-semibold"><i class="fa-solid fa-arrow-left mr-2"></i> Kembali ke Latihan</button>
                     <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg max-w-xl mx-auto">
-                        <h2 class="text-2xl font-bold mb-4 text-center text-green-700">Pembina Ayat Dikuasakan AI ✨</h2>
+                        <h2 class="text-2xl font-bold mb-4 text-center text-green-700">Pembina Ayat ✨</h2>
                         <p class="text-center text-gray-600 mb-6">Tulis ayat dalam Bahasa Melayu dan Gemini akan terjemahkannya.</p>
                         <div id="builder-content"></div> <!-- Content will be injected by JS -->
                     </div>
@@ -185,6 +190,11 @@
                 <div id="latihan-budaya" class="latihan-submodule hidden">
                     <button onclick="showLatihanSubmodule('intro')" class="mb-4 text-green-600 hover:text-green-800 font-semibold"><i class="fa-solid fa-arrow-left mr-2"></i> Kembali ke Latihan</button>
                     <div id="budaya-content"></div> <!-- Content will be injected by JS -->
+                </div>
+                 <!-- Cerita Rakyat AI Sub-module -->
+                <div id="latihan-cerita" class="latihan-submodule hidden">
+                    <button onclick="showLatihanSubmodule('intro')" class="mb-4 text-green-600 hover:text-green-800 font-semibold"><i class="fa-solid fa-arrow-left mr-2"></i> Kembali ke Latihan</button>
+                    <div id="cerita-content"></div> <!-- Content will be injected by JS -->
                 </div>
             </div>
 
@@ -330,7 +340,7 @@
             const prompt = `Terangkan perkataan Bahasa Jawa '${word}' dengan lebih mendalam. Berikan maksudnya, nuansa penggunaan (jika ada, contohnya antara Ngoko dan Krama jika berbeza), dan berikan 2 contoh ayat tambahan yang praktikal berserta terjemahan Bahasa Melayu. Format jawapan dengan kemas menggunakan markdown. Balas dalam Bahasa Melayu.`;
             try {
                 const responseText = await callGemini(prompt);
-                infoModalContent.innerHTML = responseText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>');
+                infoModalContent.innerHTML = formatGeminiResponse(responseText);
                 infoModalContent.classList.remove('hidden');
             } catch (error) { console.error("Error calling Gemini API for explanation:", error); infoModalError.classList.remove('hidden'); } finally { infoModalLoader.classList.add('hidden'); }
         }
@@ -340,9 +350,36 @@
             const prompt = `Terangkan tentang etiket dan budaya Jawa berkaitan topik ini: "${topic}". Jelaskan dalam Bahasa Melayu dengan gaya yang mudah difahami, ringkas, dan sertakan contoh praktikal jika boleh. Fokus pada perkara penting yang perlu diketahui oleh seorang pelajar bahasa.`;
             try {
                 const responseText = await callGemini(prompt);
-                infoModalContent.innerHTML = responseText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>');
+                infoModalContent.innerHTML = formatGeminiResponse(responseText);
                 infoModalContent.classList.remove('hidden');
             } catch (error) { console.error("Error calling Gemini API for culture tip:", error); infoModalError.classList.remove('hidden'); } finally { infoModalLoader.classList.add('hidden'); }
+        }
+
+        async function fetchFolkloreStory() {
+            const character = document.getElementById('folklore-character').value;
+            const container = document.getElementById('folklore-result-container');
+            const contentDiv = document.getElementById('folklore-result');
+            const loader = document.getElementById('folklore-loader');
+            const button = document.getElementById('folklore-button');
+
+            loader.classList.remove('hidden');
+            button.disabled = true;
+            container.classList.add('hidden');
+
+            const prompt = `Sebagai seorang pencerita, ceritakan sebuah kisah rakyat Jawa yang ringkas (sekitar 100-150 patah perkataan) mengenai "${character}". Ceritakan dalam Bahasa Jawa tahap ${currentLanguageLevel}, kemudian sertakan terjemahan penuh dalam Bahasa Melayu di bawahnya. Gunakan format Markdown: letakkan tajuk dalam format bold, diikuti dengan cerita Bahasa Jawa, dan kemudian seksyen "Terjemahan" yang juga dalam format bold.`;
+
+            try {
+                const responseText = await callGemini(prompt);
+                contentDiv.innerHTML = formatGeminiResponse(responseText);
+                container.classList.remove('hidden');
+            } catch (error) {
+                console.error("Error fetching folklore story:", error);
+                contentDiv.innerHTML = `<p class="text-red-500">Maaf, gagal menjana cerita. Sila cuba lagi.</p>`;
+                container.classList.remove('hidden');
+            } finally {
+                loader.classList.add('hidden');
+                button.disabled = false;
+            }
         }
         
         async function callGemini(prompt) {
@@ -353,6 +390,13 @@
              const result = await response.json();
              if (result.candidates?.[0]?.content?.parts?.[0]) { return result.candidates[0].content.parts[0].text; }
              throw new Error("Invalid response from Gemini API.");
+        }
+        
+        function formatGeminiResponse(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/(\r\n|\n|\r)/gm, "<br>");
         }
 
         // --- LEARNING MODULE & GLOBAL SWITCH ---
@@ -409,10 +453,8 @@
         }
         
         // --- ROLEPLAY AI FUNCTIONS ---
-        const chatWindow = document.getElementById('chat-window');
-        const chatInput = document.getElementById('chat-input');
         async function startRoleplay() {
-            const scenario = document.getElementById('roleplay-scenario').value; roleplayState.scenario = scenario; const button = document.getElementById('start-roleplay-btn'); const loader = document.getElementById('roleplay-loader');
+            const scenario = document.getElementById('roleplay-scenario').value; roleplayState.scenario = scenario; const button = document.getElementById('start-roleplay-btn'); const loader = document.getElementById('roleplay-loader'); const chatWindow = document.getElementById('chat-window');
             button.disabled = true; loader.classList.remove('hidden'); chatWindow.innerHTML = '';
             const prompt = `You are a Javanese language tutor. Start a role-play conversation with me. Your role: A native Javanese speaker. My role: A student learning Javanese. Scenario: ${scenario}. Your task: Start the conversation with an appropriate opening line in Javanese based on the scenario. Provide the Malay translation in parentheses after the Javanese text. For example: "Sugeng enjing (Selamat pagi)". Just give the opening line.`;
             try {
@@ -422,14 +464,14 @@
             } catch (error) { alert("Maaf, gagal memulakan role-play. Sila cuba lagi."); } finally { button.disabled = false; loader.classList.add('hidden'); }
         }
         async function sendMessageToAi() {
-            const userMessage = chatInput.value.trim(); if (!userMessage) return; addMessageToChat('user', userMessage); chatInput.value = '';
+            const chatInput = document.getElementById('chat-input'); const userMessage = chatInput.value.trim(); if (!userMessage) return; addMessageToChat('user', userMessage); chatInput.value = '';
             const prompt = `Continue the Javanese role-play conversation. Scenario: ${roleplayState.scenario}. Conversation history so far: ${roleplayState.history.map(m => `${m.role}: ${m.message}`).join('\n')} \n The user just said: "${userMessage}" \n Your task is to respond in a structured format: 1. Your response in Javanese. 2. The Malay translation of your response in parentheses. 3. A simple, one-line feedback or correction for the user's last message, in Malay. Start it with "Maklum balas:". If their message is perfect, say "Maklum balas: Ungkapan anda sudah bagus!". \n Combine these three parts into a single response.`;
             try {
                 const aiResponse = await callGemini(prompt); addMessageToChat('ai', aiResponse);
             } catch(error) { addMessageToChat('ai', "Maaf, saya menghadapi masalah untuk membalas. Sila cuba lagi."); }
         }
         function addMessageToChat(role, message) {
-            roleplayState.history.push({ role, message }); const messageDiv = document.createElement('div');
+            roleplayState.history.push({ role, message }); const chatWindow = document.getElementById('chat-window'); const messageDiv = document.createElement('div');
             if (role === 'user') {
                 messageDiv.className = 'flex justify-end'; messageDiv.innerHTML = `<div class="chat-bubble-user p-3 max-w-xs md:max-w-md">${message}</div>`;
             } else {
@@ -440,7 +482,7 @@
             chatWindow.appendChild(messageDiv); chatWindow.scrollTop = chatWindow.scrollHeight;
         }
         function endRoleplay() {
-            document.getElementById('roleplay-intro').classList.add('hidden'); document.getElementById('roleplay-chat-container').classList.remove('hidden'); roleplayState.history = []; roleplayState.scenario = "";
+            document.getElementById('roleplay-intro').classList.remove('hidden'); document.getElementById('roleplay-chat-container').classList.add('hidden'); roleplayState.history = []; roleplayState.scenario = "";
         }
 
         // --- AI QUIZ FUNCTIONS ---
@@ -550,6 +592,30 @@
                         <button onclick="fetchCulturalTip('Etiket Ketika Makan Bersama')" class="bg-blue-100 text-blue-800 font-semibold p-4 rounded-lg hover:bg-blue-200 transition-all duration-300 transform hover:scale-105"><i class="fa-solid fa-utensils mb-2 text-2xl"></i><br>Adab Makan</button>
                         <button onclick="fetchCulturalTip('Adab Memberi dan Menerima Hadiah')" class="bg-purple-100 text-purple-800 font-semibold p-4 rounded-lg hover:bg-purple-200 transition-all duration-300 transform hover:scale-105"><i class="fa-solid fa-gift mb-2 text-2xl"></i><br>Memberi & Menerima</button>
                         <button onclick="fetchCulturalTip('Bahasa Badan dan Gerak Isyarat')" class="bg-yellow-100 text-yellow-800 font-semibold p-4 rounded-lg hover:bg-yellow-200 transition-all duration-300 transform hover:scale-105"><i class="fa-solid fa-hand-point-right mb-2 text-2xl"></i><br>Bahasa Badan</button>
+                    </div>
+                </div>`;
+             // Cerita Rakyat Content
+            document.getElementById('cerita-content').innerHTML = `
+                <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg max-w-xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-4 text-center text-green-700">Cerita Rakyat AI ✨</h2>
+                    <p class="text-center text-gray-600 mb-6">Terokai warisan Jawa melalui cerita rakyat. Pilih watak untuk menjana cerita dalam tahap <span class="font-bold text-green-700">${currentLanguageLevel}</span>.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="folklore-character" class="font-medium">Pilih Watak/Cerita:</label>
+                            <select id="folklore-character" class="w-full mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <option value="Timun Mas">Timun Mas</option>
+                                <option value="Roro Jonggrang">Roro Jonggrang</option>
+                                <option value="Bawang Merah Bawang Putih">Bawang Merah Bawang Putih</option>
+                                <option value="Sangkuriang (Legenda Tangkuban Perahu)">Sangkuriang</option>
+                            </select>
+                        </div>
+                        <button onclick="fetchFolkloreStory()" id="folklore-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 px-8 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
+                            <span>Jana Cerita</span>
+                        </button>
+                    </div>
+                    <div id="folklore-result-container" class="mt-6 hidden">
+                         <div id="folklore-loader" class="loader mx-auto"></div>
+                        <div id="folklore-result" class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 text-left leading-relaxed"></div>
                     </div>
                 </div>`;
         }
